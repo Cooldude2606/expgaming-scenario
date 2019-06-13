@@ -154,38 +154,37 @@
     Roles._prototype:print(message) --- Will print a message to all players with this role
 ]]
 
+local Constructor = require 'expcore.constructor'
 local Game = require 'utils.game'
-local Global = require 'utils.global'
 local Event = require 'utils.event'
 local Groups = require 'expcore.permission_groups'
 local Sudo = require 'expcore.sudo'
 local Colours = require 'resources.color_presets'
 local write_json = ext_require('expcore.common','write_json')
 
-local Roles = {
-    config={
+local Roles =
+Constructor{
+    on_role_assigned=Constructor.event,
+    on_role_unassigned=Constructor.event,
+    config = Constructor.global{
         order={}, -- Contains the order of the roles, lower index is better
         roles={}, -- Contains the raw info for the roles, indexed by role name
         flags={}, -- Contains functions that run when a flag is added/removed from a player
         internal={}, -- Contains all internally accessed roles, such as root, default
         players={}
     },
-    player_role_assigned=script.generate_event_name(),
-    player_role_unassigned=script.generate_event_name(),
-    _prototype={}
+    _prototype=Constructor.prototype{
+        flags = {},
+        allowed_actions = {},
+        allow_all_actions = false,
+        global = Constructor.global(function(Roles,role)
+            local parent = Roles.config.roles[role.parent]
+            if parent then
+                setmetatable(role.allowed_actions, {__index=parent.allowed_actions})
+            end
+        end)
+    }
 }
-
---- When global is loaded it will have the metatable re-assigned to the roles
-Global.register(Roles.config,function(tbl)
-    Roles.config = tbl
-    for _,role in pairs(Roles.config.roles) do
-        setmetatable(role,{__index=Roles._prototype})
-        local parent = Roles.config.roles[role.parent]
-        if parent then
-            setmetatable(role.allowed_actions, {__index=parent.allowed_actions})
-        end
-    end
-end)
 
 --- Internal function used to trigger a few different things when roles are changed
 -- this is the raw internal trigger as the other function is called at other times
@@ -195,9 +194,9 @@ local function emit_player_roles_updated(player,type,roles,by_player_name,skip_g
     local by_player = Game.get_player_from_any(by_player_name)
     local by_player_index = by_player and by_player.index or 0
     -- get the event id from the type of emit
-    local event = Roles.player_role_assigned
+    local event = Roles.events.on_role_assigned
     if type == 'unassign' then
-        event = Roles.player_role_unassigned
+        event = Roles.events.on_role_unassigned
     end
     -- convert the roles to objects and get the names of the roles
     local role_names = {}
@@ -495,13 +494,9 @@ end
 -- @treturn Roles._prototype the start of the config chain for this role
 function Roles.new_role(name,short_hand)
     if Roles.config.roles[name] then return error('Role name is non unique') end
-    local role = setmetatable({
-        name=name,
-        short_hand=short_hand or name,
-        allowed_actions={},
-        allow_all_actions=false,
-        flags={}
-    },{__index=Roles._prototype})
+    local role = Roles.new_instance()
+    role.name = name
+    role.short_hand = short_hand
     Roles.config.roles[name] = role
     return role
 end
@@ -775,8 +770,8 @@ local function role_update(event)
 end
 
 --- When a player joined or has a role change then the update is triggered
-Event.add(Roles.player_role_assigned,role_update)
-Event.add(Roles.player_role_unassigned,role_update)
+Event.add(Roles.events.on_role_assigned,role_update)
+Event.add(Roles.events.on_role_unassigned,role_update)
 Event.add(defines.events.on_player_joined_game,role_update)
 -- Every 60 seconds the auto promote check is preformed
 Event.on_nth_tick(3600,function()
