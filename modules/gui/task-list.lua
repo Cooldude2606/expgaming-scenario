@@ -2,7 +2,6 @@
 local Gui = require 'expcore.gui'
 local Store = require 'expcore.store'
 local Global = require 'utils.global'
-local Event = require 'utils.event'
 local Roles = require 'expcore.roles'
 local Token = require 'utils.token'
 local config = require 'config.tasks'
@@ -415,7 +414,7 @@ Store.register(task_store,function(value,task_id)
 end)
 
 --- Makess sure the right buttons are present when roles change
-Event.add(Roles.events.on_role_assigned,task_list 'redraw')
-Event.add(Roles.events.on_role_unassigned,task_list 'redraw')
+Roles.on_role_assigned(task_list 'redraw')
+Roles.on_role_unassigned(task_list 'redraw')
 
 return task_list
