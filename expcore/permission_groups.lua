@@ -48,27 +48,27 @@
     Permissions_Groups._prototype:print(message) --- Prints a message to every player in this group
 ]]
 
-
+local Constructor = require 'expcore.constructor'
 local Game = require 'utils.game'
 local Event = require 'utils.event'
 local Sudo = require 'expcore.sudo'
 
-local Permissions_Groups = {
+local Permissions_Groups =
+Constructor{
     groups={}, -- store for the different groups that are created
-    _prototype={} -- stores functions that are used on group instances
+    _prototype=Constructor.prototype{ -- stores functions that are used on group instances
+        actions = {},
+        allow_all_actions = true
+    }
 }
 
 --- Defines a new permission group that can have it actions set in the config
 -- @tparam string name the name of the new group
 -- @treturn Permissions_Groups._prototype the new group made with function to allow and disallow actions
 function Permissions_Groups.new_group(name)
-    local group = setmetatable({
-        name=name,
-        actions={},
-        allow_all_actions=true
-    },{
-        __index= Permissions_Groups._prototype
-    })
+    local group = Permissions_Groups.new_instance{
+        name = name
+    }
     Permissions_Groups.groups[name] = group
     return group
 end

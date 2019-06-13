@@ -96,11 +96,10 @@ local function new_prototype_factory(class)
     }
     local deepcopy = table.deepcopy
     local uid_alias = prototype._uid
-    return function()
+    return function(rtn)
         local instance_id = #instances[class_id]+1
-        local rtn = {
-            _uid = instance_id
-        }
+        rtn = rtn or {}
+        rtn._uid = instance_id
         if uid_alias then
             rtn[uid_alias] = instance_id
         end

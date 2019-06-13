@@ -494,9 +494,10 @@ end
 -- @treturn Roles._prototype the start of the config chain for this role
 function Roles.new_role(name,short_hand)
     if Roles.config.roles[name] then return error('Role name is non unique') end
-    local role = Roles.new_instance()
-    role.name = name
-    role.short_hand = short_hand
+    local role = Roles.new_instance{
+        name = name,
+        short_hand = short_hand
+    }
     Roles.config.roles[name] = role
     return role
 end
