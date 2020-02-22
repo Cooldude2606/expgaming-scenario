@@ -6,7 +6,6 @@
 
 local Gui = require 'expcore.gui' --- @dep expcore.gui
 local Store = require 'expcore.store' --- @dep expcore.store
-local Global = require 'utils.global' --- @dep utils.global
 local Event = require 'utils.event' --- @dep utils.event
 local Game = require 'utils.game' --- @dep utils.game
 local Roles = require 'expcore.roles' --- @dep expcore.roles
