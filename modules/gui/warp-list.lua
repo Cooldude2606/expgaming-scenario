@@ -25,12 +25,6 @@ local player_warp_cooldown_store = Store.register(function(player)
     return player.name
 end)
 
--- Table that stores a boolean value of weather to keep the warp gui open
-local keep_gui_open = {}
-Global.register(keep_gui_open,function(tbl)
-    keep_gui_open = tbl
-end)
-
 -- Styles used for sprite buttons
 local Styles = {
     sprite20 = Gui.sprite_style(20),
@@ -441,7 +435,7 @@ Gui.left_toolbar_button('item/'..config.default_icon,{'warp-list.main-tooltip',c
 end)
 :on_click(function(player,_,_)
     local visible_state = Gui.toggle_left_element(player, warp_list_container)
-    keep_gui_open[player.name] = visible_state
+    warp_list_container.keep_open = visible_state
 end)
 
 --- When the name of a warp is updated this is triggered
@@ -499,7 +493,7 @@ Store.watch(player_in_range_store,function(value,player_name)
     local force = player.force
 
     -- Change if the frame is visible based on if the player is in range
-    if not keep_gui_open[player.name] then
+    if not warp_list_container.keep_open then
         Gui.toggle_left_element(player,warp_list_container,value)
     end
 

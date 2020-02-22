@@ -496,19 +496,56 @@ end)
 
 ]]
 function Gui.left_toolbar_button(sprite,tooltip,element_define,authenticator)
-    return Gui.element{
+    local button = Gui.element{
         type = 'sprite-button',
         sprite = sprite,
         tooltip = tooltip,
         style = Gui.top_flow_button_style
     }
     :style{
+        minimal_width = 36,
+        height = 36,
         padding = -2
     }
     :add_to_top_flow(authenticator)
     :on_click(function(player,_,_)
         Gui.toggle_left_element(player, element_define)
     end)
+    element_define.toolbar_button = button.name
+    return button
+end
+
+--[[-- Styles the left toolbar button according to the state given
+@tparam LuaPlayer player the player to hide the elements for
+@tparam table element_define the element that you want to toggle for the player
+@tparam[opt] boolean state if given then the state will be set to this state
+@treturn boolean the new visible state of the element
+
+@usage-- Set the style to be a green button
+Gui.style_left_toolbar_button(game.player,Gui.defines[name],true)
+
+@usage-- Set the style to be a gray button
+Gui.style_left_toolbar_button(game.player,Gui.defines[name],false)
+
+]]
+function Gui.style_left_toolbar_button(player,element_define,state)
+    local top_flow = Gui.get_top_flow(player)
+
+    -- Set the toolbar button style if present
+    if element_define.toolbar_button then
+        local button = top_flow[element_define.toolbar_button]
+        if button ~= nil then
+            if state then
+                button.style = "menu_button_continue" -- darker button "shortcut_bar_button_green"
+                -- Because this button is bigger we need to set the style again.
+                button.style.minimal_width = 36
+                button.style.height = 36
+                button.style.padding = -2
+            else
+                button.style = Gui.top_flow_button_style
+            end
+        end
+    end
 end
 
 --[[-- Hides all left elements for a player
@@ -526,6 +563,15 @@ function Gui.hide_left_flow(player)
     hide_button.visible = false
     for name,_ in pairs(Gui.left_elements) do
         left_flow[name].visible = false
+
+        -- Get the assosiated element define
+        local element_define = Gui.defines[name]
+        -- Reset the keep open state if its set on the define
+        if element_define.keep_open ~= nil then
+            element_define.keep_open = false
+        end
+        -- Set the toolbar button style to default
+        Gui.style_left_toolbar_button(player, element_define, false)
     end
 end
 
@@ -564,6 +610,9 @@ function Gui.toggle_left_element(player,element_define,state)
     local element = left_flow[element_define.name]
     if state == nil then state = not element.visible end
     element.visible = state
+
+    -- Set the toolbar button style if present
+    Gui.style_left_toolbar_button(player,element_define,state)
 
     -- Check if the hide button should be visible
     local show_hide_button = false
@@ -612,6 +661,10 @@ Event.add(defines.events.on_player_created,function(event)
         left_element.visible = visible
         if visible then
             show_hide_left = true
+
+            -- Set the toolbar button style to present
+            local element_define = Gui.defines[name]
+            Gui.style_left_toolbar_button(player, element_define, true)
         end
     end
 
